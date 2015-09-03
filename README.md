@@ -38,6 +38,8 @@ def retraso(x,y):
     distance = calc_dist_2(x, y)
     return  (3.2 * distance + 32) * ms  
 
+# funciones que describen las conecciones entre grupos neuronales
+
 def stim_to_ipc(from_,to_):
     ''' Pesos sinapticos en la conexion entre estimulo y neuronas del Ipc'''
     m = 15; sep = 3        
@@ -138,6 +140,8 @@ def pivotes_imc():
             pivotes_imc.append((w,z))
     return pivotes_imc              
 
+# funciones relacionadas con la estimulacion
+
 def change_position2(t):
     ''' Cambio en la posicion del estimulo durante la simulacion para dos estimulos'''
     posx1 = x0_stim1 + np.sin(angle1) * (vel_converted_1) * t 
@@ -159,7 +163,7 @@ def freq_RGC(vel,tam):
     
 ''' Dos estimulos. Se definen los parametros del campo visual y de los estimulos.
 Se crea el PoissonGroup'''
-## estimulo 1
+## caracteriticas del estimulo 1
 N_estimulo = 70*70    
 init1 = (20,10)
 angle1 = 0
@@ -170,7 +174,7 @@ conv = 2 # factor de conversion de grados a bottlebrushes
 vel_converted_1 = velocity_1 * conv  # cantidad de bb que recorre por segundo
 side1 = 2
 rate1 = freq_RGC(velocity_1,side1)
-## estimulo 2 
+## caracteristicas del estimulo 2 
 init2 = (40,10)
 angle2 = 0
 x0_stim2 = init2[0]
@@ -183,6 +187,8 @@ t_initial_stim2 = 0 * msecond # tiempo en el cual aparece el segundo estimulo, d
 lado = 70  
 size_VF = lado
 stim = PoissonGroup(N_estimulo, change_position2)
+
+# creacion de los grupos neuronales
 
 ''' Define el numero de neuronas por grupo neuronal, las ecuaciones que rigen su 
 dinamica de voltaje y se crean los NeuronGroup. Son tres grupos neuronales: los
@@ -220,6 +226,8 @@ L5 = NeuronGroup(N_bottlebrushes, model=eqs, reset=0 * mV, threshold=10 * mV)
 Ipc = NeuronGroup(N_ipc, model=eqs_i, threshold=Vcut, reset="vm=Vr;w+=b", freeze=True)
 Imc = NeuronGroup(N_imc, model=eqs, reset=0 * mV, threshold=10 * mV,refractory=0*ms)
 Ipc.vm = EL
+
+# creacion de las conecciones entre grupos neuronales 
 
 ''' Sinapsis entre el estimulo y los bottlebrushes. Se basa en la dinamica probabilistica
 descrita por Luksch'''
@@ -259,16 +267,17 @@ inh_imc = Connection(Imc,Imc, sparseness=1., weight=imc_to_imc)
 ''' Se crea la conexion homotopica excitatoria del Ipc al Imc'''
 ipc_imc = Connection(Ipc,Imc,sparseness=1.,weight=ipc_to_imc) 
 
-''' Registrar las espigas de los bottlebrushes'''
+# output de la simulacion 
+''' Registrar los tiempos de espigas'''
 M = SpikeMonitor(L5)
-#N = SpikeMonitor(Ipc)
-#O = SpikeMonitor(Imc)
-#L = SpikeMonitor(stim)
+N = SpikeMonitor(Ipc)
+O = SpikeMonitor(Imc)
+L = SpikeMonitor(stim)
 
-# output
-#rec_bot = StateMonitor(L5,'v',record=True, timestep=100)
-#rec_ipc = StateMonitor(Ipc,'vm',record=True, timestep=100)
-#rec_stim = StateMonitor(stim,'rate', record= True, timestep=100)
+''' Registrar variables de estado'''
+rec_bot = StateMonitor(L5,'v',record=True, timestep=100)
+rec_ipc = StateMonitor(Ipc,'vm',record=True, timestep=100)
+rec_stim = StateMonitor(stim,'rate', record= True, timestep=100)
 
 ''' Correr la simulacion una cantidad de segundos'''
 run(2000*msecond)
